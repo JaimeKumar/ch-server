@@ -43,23 +43,41 @@ app.post('/book', async (req, res) => {
   }
 });
 
-app.post('/getBookings', async (req, res) => {
+async function getBookings() {
+  try {
+    const query = `SELECT * FROM public.appointments;`;
+    let client = getClient();
+    await client.connect();
+    const result = await client.query(query);
+    await client.end();
+    return {success: true, data: result.rows}
+  } catch (err) {
+    return {success: false}
+  }
+}
+
+app.post('/login', async (req, res) => {
   const {name, pw, auth} = req.body;
   if (name !== process.env.ADMINUSER && !auth) {
     res.status(500).json({error: 'name'})
   } else if (pw !== process.env.ADMINPW && !auth) {
     res.status(500).json({error: 'pw'})
   } else {
-    try {
-        const query = `SELECT * FROM public.appointments;`;
-        let client = getClient();
-        await client.connect();
-        const result = await client.query(query);
-        await client.end();
-        res.status(201).json(result.rows);
-      } catch (err) {
-        res.status(500).json({error: 'Internal server error'});
-      }
+    let result = getBookings();
+    if (result.success) {
+      res.status(201).json(result.data);
+    } else {
+      res.status(500).json({error: 'Internal server error'})
+    }
+  }
+})
+
+app.get('/getBookings', async (req, res) => {
+  let result = getBookings();
+  if (result.success) {
+    res.status(201).json(result.data);
+  } else {
+    res.status(500).json({error: 'Internal server error'})
   }
 })
 
