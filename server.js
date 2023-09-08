@@ -64,7 +64,7 @@ app.post('/login', async (req, res) => {
     res.status(500).json({error: 'pw'})
   } else {
     console.log('getting Bookings')
-    let result = getBookings();
+    let result = await getBookings();
     if (result.success) {
       res.status(201).json(result.data);
     } else {
