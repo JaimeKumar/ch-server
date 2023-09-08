@@ -4,7 +4,7 @@ const { Client } = require('pg');
 const dotenv = require('dotenv');
 const bodyParser = require("body-parser");
 const cors = require("cors");
-dotenv.config({path: './server/.env'});
+dotenv.config({path: './.env'});
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
