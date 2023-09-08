@@ -58,12 +58,12 @@ async function getBookings() {
 
 app.post('/login', async (req, res) => {
   const {name, pw} = req.body;
-  console.log(name, pw, process.env.ADMINUSER, process.env.ADMINPW, (name===process.env.ADMINUSER), (pw===process.env.ADMINPW))
   if (name !== process.env.ADMINUSER) {
     res.status(500).json({error: 'name'})
   } else if (pw !== process.env.ADMINPW) {
     res.status(500).json({error: 'pw'})
   } else {
+    console.log('getting Bookings')
     let result = getBookings();
     if (result.success) {
       res.status(201).json(result.data);
@@ -75,6 +75,7 @@ app.post('/login', async (req, res) => {
 
 app.get('/getBookings', async (req, res) => {
   let result = getBookings();
+  console.log(result)
   if (result.success) {
     res.status(201).json(result.data);
   } else {
