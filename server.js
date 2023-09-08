@@ -57,10 +57,10 @@ async function getBookings() {
 }
 
 app.post('/login', async (req, res) => {
-  const {name, pw, auth} = req.body;
-  if (name !== process.env.ADMINUSER && !auth) {
+  const {name, pw} = req.body;
+  if (name !== process.env.ADMINUSER) {
     res.status(500).json({error: 'name'})
-  } else if (pw !== process.env.ADMINPW && !auth) {
+  } else if (pw !== process.env.ADMINPW) {
     res.status(500).json({error: 'pw'})
   } else {
     let result = getBookings();
