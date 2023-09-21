@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const path = require('path');
 const { Client } = require('pg');
 const dotenv = require('dotenv');
 const bodyParser = require("body-parser");
