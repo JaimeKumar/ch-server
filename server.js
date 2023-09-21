@@ -73,11 +73,6 @@ app.post('/login', async (req, res) => {
   }
 })
 
-app.get('/getVid', (req, res) => {
-  const videoFilePath = path.join(__dirname, 'carat-haus-vid-short-sm.mp4');
-  res.sendFile(videoFilePath);
-});
-
 app.get('/getBookings', async (req, res) => {
   let result = await getBookings();
   if (result.success) {
