@@ -1,7 +1,7 @@
 const express = require('express');
+const fs = require('fs').promises;
+const short = require('short-uuid')
 const app = express();
-const path = require('path');
-const { Client } = require('pg');
 const dotenv = require('dotenv');
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -12,50 +12,32 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static('public'));
 
-const getClient = () => {
-    return new Client({
-        user: process.env.PGUSER,
-        host: process.env.PGHOST,
-        database: process.env.PGDATABASE,
-        password: process.env.PGPASSWORD,
-        port: process.env.PGPORT,
-        ssl: true
-    })
-};
+const readDB = async () => {
+  let read = await fs.readFile('db.json', 'utf8')
+  return JSON.parse(read)
+}
+
+const writeDB = async (newDB) => {
+  await fs.writeFile('db.json', JSON.stringify(newDB), 'utf8')
+  return true
+}
 
 app.post('/book', async (req, res) => {
   const { name, number, time, email } = req.body;
+  let oldDB = await readDB();
+  if (!oldDB) oldDB = {};
 
-  try {
-    const query = `
-      INSERT INTO public.appointments(name, number, timeslot, email)
-      VALUES ($1, $2, $3, $4)
-      RETURNING *;`;
-
-    const client = getClient();
-    await client.connect();
-    const result = await client.query(query, [name, number, time, email]);
-    await client.end();
-    
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+  const id = short().new();
+  oldDB[id] = {
+    name: name,
+    number: number,
+    timeslot: time,
+    email: email
   }
+  
+  res.json(oldDB[id])
+  writeDB(oldDB)
 });
-
-async function getBookings() {
-  try {
-    const query = `SELECT * FROM public.appointments;`;
-    let client = getClient();
-    await client.connect();
-    const result = await client.query(query);
-    await client.end();
-    return {success: true, data: result.rows}
-  } catch (err) {
-    return {success: false}
-  }
-}
 
 app.post('/login', async (req, res) => {
   const {name, pw} = req.body;
@@ -64,42 +46,24 @@ app.post('/login', async (req, res) => {
   } else if (pw !== process.env.ADMINPW) {
     res.status(500).json({error: 'pw'})
   } else {
-    let result = await getBookings();
-    if (result.success) {
-      res.status(201).json(result.data);
-    } else {
-      res.status(500).json({error: 'Internal server error'})
-    }
+    let result = await readDB();
+    res.json(result)
   }
 })
 
 app.get('/getBookings', async (req, res) => {
-  let result = await getBookings();
-  if (result.success) {
-    res.status(201).json(result.data);
-  } else {
-    res.status(500).json({error: 'Internal server error'})
-  }
+  let result = await readDB();
+  res.json(result)
 })
 
 app.post('/deleteBooking', async (req, res) => {
   let id = req.body.id;
-  try {
-    const deletequery = `
-    DELETE FROM public.appointments
-    WHERE id = ${id};
-    `;
-    const retrievequery = `SELECT * FROM public.appointments;`;
+  let db = await readDB();
 
-    let client = getClient();
-    await client.connect();
-    await client.query(deletequery);
-    const result = await client.query(retrievequery);
-    await client.end();
-    res.status(201).json(result.rows);
-  } catch (err) {
-    res.status(500).json({error: 'Internal server error'});
-  }
+  delete db[id]
+
+  await writeDB(db)
+  res.json(db)
 })
 
 app.listen(process.env.PORT || 4000, () => {
